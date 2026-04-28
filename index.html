@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Gastos — Finca</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --verde: #1B5E20;
+    --verde-medio: #2E7D32;
+    --verde-claro: #E8F5E9;
+    --verde-borde: #A5D6A7;
+    --texto: #1a1a1a;
+    --texto-suave: #666;
+    --fondo: #F4F7F2;
+    --blanco: #ffffff;
+    --error-bg: #FFEBEE;
+    --error: #C62828;
+    --exito-bg: #E8F5E9;
+    --exito: #1B5E20;
+    --info-bg: #E3F2FD;
+    --info: #0D47A1;
+    --borde: #D6E8CE;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+  .container { max-width: 560px; margin: 0 auto; }
+
+  header { margin-bottom: 2rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--borde); }
+  header h1 { font-size: 21px; font-weight: 500; color: var(--verde); letter-spacing: -0.3px; }
+  header p { font-size: 13px; color: var(--texto-suave); margin-top: 5px; line-height: 1.5; }
+
+  .card {
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 14px;
+  }
+
+  .step-label {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 12px;
+  }
+  .step-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--verde); color: white;
+    font-size: 11px; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-num.ok { background: #43A047; }
+  .step-title { font-size: 13px; font-weight: 500; color: var(--verde); }
+
+  label { font-size: 12px; color: var(--texto-suave); display: block; margin-bottom: 5px; }
+
+  textarea {
+    width: 100%; min-height: 110px;
+    padding: 10px 12px;
+    border: 1px solid var(--borde);
+    border-radius: 9px;
+    font-size: 14px; line-height: 1.65;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+    resize: vertical; outline: none;
+    transition: border-color 0.15s;
+  }
+  textarea:focus { border-color: var(--verde-medio); }
+
+  .hint { font-size: 11.5px; color: #999; margin-top: 6px; line-height: 1.55; }
+
+  .btn {
+    display: block; width: 100%;
+    padding: 12px; border: none; border-radius: 9px;
+    font-size: 14px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; margin-top: 12px;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.1px;
+  }
+  .btn:active { transform: scale(0.99); }
+  .btn-guardar { background: var(--verde); color: white; }
+  .btn-guardar:hover { background: #145218; }
+  .btn-guardar:disabled { background: #BDBDBD; cursor: not-allowed; transform: none; }
+
+  .status {
+    font-size: 13px; padding: 10px 13px;
+    border-radius: 8px; margin-top: 10px; line-height: 1.5;
+  }
+  .status.success { background: var(--exito-bg); color: var(--exito); border: 1px solid var(--verde-borde); }
+  .status.error   { background: var(--error-bg); color: var(--error); }
+  .status.info    { background: var(--info-bg); color: var(--info); }
+
+  .preview-list { margin-top: 14px; display: flex; flex-direction: column; gap: 7px; }
+  .preview-item {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+    background: var(--verde-claro);
+    border: 1px solid var(--verde-borde);
+    border-radius: 9px; padding: 9px 13px;
+  }
+  .pi-left {}
+  .pi-desc { font-size: 13px; font-weight: 500; color: var(--verde); }
+  .pi-cat  { font-size: 11.5px; color: var(--texto-suave); margin-top: 2px; }
+  .pi-val  { font-size: 14px; font-weight: 500; color: var(--verde); white-space: nowrap; font-family: 'DM Mono', monospace; padding-top: 1px; }
+
+  .total-row {
+    background: var(--verde); color: white; border-radius: 9px;
+    padding: 11px 14px; display: flex; justify-content: space-between; align-items: center;
+    margin-top: 4px; font-size: 14px; font-weight: 500;
+  }
+  .total-row span:last-child { font-family: 'DM Mono', monospace; font-size: 16px; }
+
+  .sheet-btn {
+    display: inline-block; margin-top: 10px;
+    font-size: 12px; color: var(--info); text-decoration: none;
+    padding: 5px 0; border-bottom: 1px solid transparent;
+    transition: border-color 0.15s;
+  }
+  .sheet-btn:hover { border-color: var(--info); }
+
+  .ready-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--exito-bg); color: var(--exito);
+    border: 1px solid var(--verde-borde);
+    border-radius: 20px; padding: 4px 10px;
+    font-size: 12px; font-weight: 500; margin-bottom: 10px;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #43A047; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>Control de Gastos — Finca</h1>
+    <p>Escribe tus gastos en lenguaje natural y se guardan automáticamente en tu Google Sheets.</p>
+  </header>
+
+  <div class="card">
+    <div class="step-label">
+      <div class="step-num ok">✓</div>
+      <span class="step-title">Conectado con Google Sheets</span>
+    </div>
+    <div class="ready-badge"><div class="dot"></div> Listo para registrar</div>
+    <p style="font-size:13px; color:var(--texto-suave);">
+      Tu hoja <strong>"control gastos finca"</strong> está conectada y lista.
+    </p>
+    <a class="sheet-btn" href="https://docs.google.com/spreadsheets/d/1psDhlauAHgHgmrBbrHYMZzSnCFTghhNECe5DFPx2HG0/edit" target="_blank">
+      Abrir Google Sheets →
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="step-label">
+      <div class="step-num">1</div>
+      <span class="step-title">Registrar gastos de hoy</span>
+    </div>
+    <label>Escríbelos como si le escribieras a un amigo — separa cada uno con coma o Enter</label>
+    <textarea id="gastos-input" placeholder="Ej: arreglo moto bomba 100000, transferencia mensual pedro perez 50000, sal 2 bultos 80000 cada uno, vacuna aftosa 20 dosis 2250 cada una"></textarea>
+    <p class="hint">
+      Incluye el valor en números. Si el precio es por unidad agrega "cada uno" al final de ese gasto.
+    </p>
+    <button class="btn btn-guardar" id="btn-guardar" onclick="procesarYGuardar()">
+      Guardar en Google Sheets
+    </button>
+    <div id="process-status"></div>
+    <div class="preview-list" id="preview"></div>
+  </div>
+
+</div>
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyhEXzLMQTvT75Bb_GEU65RaT1wxeiZa7m-o0yDRuyVmoCD7hpokyQ5dQsiIG7cWi2sWA/exec';
+
+function categorizar(desc) {
+  const d = desc.toLowerCase();
+  if (d.match(/vacuna|medicament|ivermectina|antiparasit|desparasit|veterin|antibiótico|vitamina|jeringa|sanidad/))
+    return { cat: 'Sanidad animal', sub: d.includes('vacuna') ? 'Vacunas' : 'Medicamentos' };
+  if (d.match(/\bsal\b|concentrado|forraje|pasto|melaza|silo|alimento|mineral|heno|maíz molido/))
+    return { cat: 'Alimentación animal', sub: d.includes('sal') ? 'Minerales' : 'Concentrados' };
+  if (d.match(/herbicida|fungicida|insecticida|glifosato|fertilizante|abono|alambre|agroquím/))
+    return { cat: 'Insumos agrícolas', sub: d.includes('alambre') ? 'Cercas' : 'Agroquímicos' };
+  if (d.match(/jornal|mensual|mensualidad|salario|obrero|trabajador|pedro|empleado|transfer|nequi/))
+    return { cat: 'Mano de obra', sub: d.includes('mensual') || d.includes('transfer') ? 'Mensualidad' : 'Jornales' };
+  if (d.match(/gasolina|aceite|moto|bomba|tractor|maquinar|equipo|herramienta|mantenimiento|reparaci|arreglo|motor/))
+    return { cat: 'Maquinaria y equipos', sub: d.includes('gasolina') ? 'Combustible' : 'Mantenimiento' };
+  if (d.match(/flete|transporte|camión|viaje|moviliz/))
+    return { cat: 'Transporte', sub: 'Flete' };
+  if (d.match(/semilla|plántula|material vegetal|esqueje/))
+    return { cat: 'Semillas y material vegetal', sub: 'Semillas' };
+  return { cat: 'Administración y otros', sub: 'General' };
+}
+
+function parsear(texto) {
+  const hoy = new Date().toLocaleDateString('en-CA');
+  const lineas = texto.split(/[,\n]+/).map(l => l.trim()).filter(l => l.length > 3);
+  const rows = [];
+  for (const linea of lineas) {
+    const numMatch = linea.match(/(\d[\d.]*)\s*(?:cada\s+uno|cada\s+una|c\/u)?$/i);
+    if (!numMatch) continue;
+    const valorBase = parseInt(numMatch[1].replace(/\./g, ''));
+    const cadaUno = /cada\s+uno|cada\s+una|c\/u/i.test(linea);
+    const cantMatch = linea.match(/(\d+)\s+(bultos?|frascos?|litros?|kilos?|sacos?|rollos?|dosis|unidades?)/i);
+    const cantidad = cantMatch ? parseInt(cantMatch[1]) : 1;
+    const unidadMatch = linea.match(/\d+\s+(bultos?|frascos?|litros?|kilos?|sacos?|rollos?|dosis|unidades?|jornal|mensual|servicio|viaje|almuerzo)/i);
+    const unidad = unidadMatch ? unidadMatch[1] : 'servicio';
+    const total = cadaUno ? cantidad * valorBase : valorBase;
+    const valorUnit = cadaUno ? valorBase : Math.round(total / Math.max(cantidad, 1));
+    const descripcion = linea.replace(/\s*\d[\d.]*\s*(?:cada\s+uno|cada\s+una|c\/u)?$/i, '').trim();
+    const desc = descripcion.charAt(0).toUpperCase() + descripcion.slice(1);
+    const { cat, sub } = categorizar(descripcion);
+    rows.push({ fecha: hoy, desc, cat, sub, proveedor: '', cantidad, unidad, valorUnit, total, notas: '' });
+  }
+  return rows;
+}
+
+function setStatus(msg, type) {
+  document.getElementById('process-status').innerHTML = '<div class="status ' + type + '">' + msg + '</div>';
+}
+
+async function procesarYGuardar() {
+  const texto = document.getElementById('gastos-input').value.trim();
+  if (!texto) { setStatus('Escribe al menos un gasto.', 'error'); return; }
+
+  const btn = document.getElementById('btn-guardar');
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+  document.getElementById('preview').innerHTML = '';
+  setStatus('Procesando y enviando a Google Sheets...', 'info');
+
+  const rows = parsear(texto);
+  if (!rows.length) {
+    setStatus('No encontré gastos con montos. Incluye el valor numérico (ej: "jornal pedro 50000").', 'error');
+    btn.disabled = false; btn.textContent = 'Guardar en Google Sheets'; return;
+  }
+
+  try {
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ rows }),
+      headers: { 'Content-Type': 'text/plain' }
+    });
+    const result = await resp.json();
+
+    if (result.ok) {
+      const totalGeneral = rows.reduce((s, r) => s + r.total, 0);
+      setStatus(rows.length + ' gasto(s) guardados correctamente en tu hoja.', 'success');
+      document.getElementById('gastos-input').value = '';
+
+      const items = rows.map(r =>
+        '<div class="preview-item">' +
+          '<div class="pi-left">' +
+            '<div class="pi-desc">' + r.desc + '</div>' +
+            '<div class="pi-cat">' + r.cat + ' · ' + r.sub + '</div>' +
+          '</div>' +
+          '<div class="pi-val">$' + r.total.toLocaleString('es-CO') + '</div>' +
+        '</div>'
+      ).join('');
+      const totalRow = '<div class="total-row"><span>Total guardado</span><span>$' + totalGeneral.toLocaleString('es-CO') + '</span></div>';
+      document.getElementById('preview').innerHTML = items + totalRow;
+    } else {
+      setStatus('Error al guardar: ' + (result.error || 'Intenta de nuevo.'), 'error');
+    }
+  } catch(e) {
+    setStatus('Error de conexión: ' + e.message, 'error');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Guardar en Google Sheets';
+}
+</script>
+</body>
+</html>
