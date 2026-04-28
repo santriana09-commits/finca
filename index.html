@@ -168,6 +168,9 @@
     <p class="hint">
       Incluye el valor en números. Si el precio es por unidad agrega "cada uno" al final de ese gasto.
     </p>
+    <label style="margin-top:12px;">Notas adicionales (opcional)</label>
+    <textarea id="notas-input" style="min-height:60px;" placeholder="Ej: compra urgente, proveedor nuevo, pendiente factura..."></textarea>
+    <p class="hint">Esta nota se agregará a todos los gastos de este registro.</p>
     <button class="btn btn-guardar" id="btn-guardar" onclick="procesarYGuardar()">
       Guardar en Google Sheets
     </button>
@@ -198,7 +201,7 @@ function categorizar(desc) {
   return { cat: 'Administración y otros', sub: 'General' };
 }
 
-function parsear(texto) {
+function parsear(texto, notas = '') {
   const hoy = new Date().toLocaleDateString('en-CA');
   const lineas = texto.split(/[,\n]+/).map(l => l.trim()).filter(l => l.length > 3);
   const rows = [];
@@ -216,7 +219,7 @@ function parsear(texto) {
     const descripcion = linea.replace(/\s*\d[\d.]*\s*(?:cada\s+uno|cada\s+una|c\/u)?$/i, '').trim();
     const desc = descripcion.charAt(0).toUpperCase() + descripcion.slice(1);
     const { cat, sub } = categorizar(descripcion);
-    rows.push({ fecha: hoy, desc, cat, sub, proveedor: '', cantidad, unidad, valorUnit, total, notas: '' });
+    rows.push({ fecha: hoy, desc, cat, sub, proveedor: '', cantidad, unidad, valorUnit, total, notas });
   }
   return rows;
 }
@@ -235,7 +238,8 @@ async function procesarYGuardar() {
   document.getElementById('preview').innerHTML = '';
   setStatus('Procesando y enviando a Google Sheets...', 'info');
 
-  const rows = parsear(texto);
+  const notas = document.getElementById('notas-input').value.trim();
+  const rows = parsear(texto, notas);
   if (!rows.length) {
     setStatus('No encontré gastos con montos. Incluye el valor numérico (ej: "jornal pedro 50000").', 'error');
     btn.disabled = false; btn.textContent = 'Guardar en Google Sheets'; return;
@@ -253,6 +257,7 @@ async function procesarYGuardar() {
       const totalGeneral = rows.reduce((s, r) => s + r.total, 0);
       setStatus(rows.length + ' gasto(s) guardados correctamente en tu hoja.', 'success');
       document.getElementById('gastos-input').value = '';
+      document.getElementById('notas-input').value = '';
 
       const items = rows.map(r =>
         '<div class="preview-item">' +
